@@ -4,6 +4,14 @@
 
 Built for the **UMD Startup Shell × Ironsite Hackathon** · February 20–22, 2026
 
+## Demo
+
+<p align="center">
+  <video src="./Moonshot_Demo.mp4" controls width="720">
+    Your browser does not support the video tag.
+  </video>
+</p>
+
 **[→ Live Demo](https://ironsite-moonshot.vercel.app/)** · **[→ Technical Paper (PDF)](Moonshot_Spatial%20Intelligence%20in%20the%20Physical%20World.pdf)** — A technical architecture & development report
 
 ---
@@ -68,6 +76,7 @@ moonshot/
 ├── frontend/           # Next.js app — upload, analyze, view reports
 ├── backend/            # NVIDIA VSS + Docker Compose stack
 ├── utilities/          # Video preprocessing scripts
+├── Moonshot_Demo.mp4                                        # Demo walkthrough video
 ├── Moonshot_Spatial Intelligence in the Physical World.pdf   # Technical architecture & development report
 └── README.md
 ```
