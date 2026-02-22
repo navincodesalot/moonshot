@@ -1,41 +1,44 @@
 import { z } from "zod";
 
-export const actionSchema = z.object({
-  action: z.string(),
-  startTime: z.string(),
-  endTime: z.string(),
-  duration: z.string(),
-  notes: z.string().optional(),
+export const pieSliceSchema = z.object({
+  name: z.string(),
+  value: z.number(),
+  seconds: z.number(),
 });
 
-export const workerSchema = z.object({
-  id: z.string(),
-  description: z.string(),
-  actions: z.array(actionSchema),
+export const timelineEventSchema = z.object({
+  category: z.string(),
+  start: z.number(),
+  end: z.number(),
+  task: z.string(),
 });
 
-export const hazardSchema = z.object({
-  description: z.string(),
-  severity: z.enum(["low", "medium", "high", "critical"]),
-  timestamp: z.string(),
+export const metadataSchema = z.object({
+  Work_Description: z.string(),
+  Stream_Duration_Sec: z.number(),
+  Gen_Summary: z.array(z.string()),
 });
 
-export const metricsSchema = z.object({
-  totalWorkers: z.number(),
-  totalActions: z.number(),
-  videoDuration: z.string(),
-  keyFindings: z.array(z.string()),
+export const scoresSchema = z.object({
+  Prod_Score: z.union([z.string(), z.number()]),
+  Qual_Score: z.union([z.string(), z.number()]),
+  Safe_Score: z.union([z.string(), z.number()]),
+});
+
+export const descriptionsSchema = z.object({
+  Prod_Desc: z.string(),
+  Qual_Desc: z.string(),
+  Safe_Desc: z.string(),
 });
 
 export const structuredReportSchema = z.object({
-  summary: z.string(),
-  workers: z.array(workerSchema),
-  hazards: z.array(hazardSchema).optional(),
-  metrics: metricsSchema,
+  Metadata: metadataSchema,
+  Recharts_Pie: z.array(pieSliceSchema),
+  Recharts_Timeline: z.array(timelineEventSchema),
+  Scores: scoresSchema,
+  Descriptions: descriptionsSchema,
 });
 
 export type StructuredReport = z.infer<typeof structuredReportSchema>;
-export type Worker = z.infer<typeof workerSchema>;
-export type Action = z.infer<typeof actionSchema>;
-export type Hazard = z.infer<typeof hazardSchema>;
-export type Metrics = z.infer<typeof metricsSchema>;
+export type PieSlice = z.infer<typeof pieSliceSchema>;
+export type TimelineEvent = z.infer<typeof timelineEventSchema>;

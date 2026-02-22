@@ -10,12 +10,26 @@ interface AnalysisProgressProps {
 }
 
 const STEP_ORDER = ["uploaded", "analyzing", "processing", "complete"];
+const STEP_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+];
+const STEP_LABELS: Record<string, string> = {
+  uploaded: "Video uploaded",
+  finalizing: "Finalizing upload",
+  analyzing: "Running AI video analysis",
+  processing: "Formatting report with Gemini",
+  complete: "Report ready",
+};
 
 export function AnalysisProgress({ status, videoFilename }: AnalysisProgressProps) {
-  const currentIdx = STEP_ORDER.indexOf(status);
+  const displayStatus = status === "finalizing" ? "analyzing" : status;
+  const currentIdx = displayStatus === "complete" ? 4 : STEP_ORDER.indexOf(displayStatus);
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="w-full max-w-lg mx-auto min-w-0">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {status !== "complete" && status !== "error" && (
@@ -27,31 +41,29 @@ export function AnalysisProgress({ status, videoFilename }: AnalysisProgressProp
       <CardContent>
         <div className="flex flex-col gap-3">
           {STEP_ORDER.map((step, idx) => {
-            const isActive = step === status;
+            const isActive = (step === "analyzing" && status === "finalizing") || step === displayStatus;
             const isDone = idx < currentIdx || status === "complete";
+            const label = step === "analyzing" && status === "finalizing"
+              ? STEP_LABELS.finalizing
+              : STEP_LABELS[step];
+            const circleColor = isDone || isActive ? STEP_COLORS[idx] : undefined;
 
             return (
               <div key={step} className="flex items-center gap-3">
                 <div
                   className={`size-2.5 rounded-full shrink-0 ${
-                    isDone
-                      ? "bg-primary"
-                      : isActive
-                        ? "bg-primary animate-pulse"
-                        : "bg-muted"
-                  }`}
+                    isDone || isActive ? "" : "bg-muted"
+                  } ${isActive ? "animate-pulse" : ""}`}
+                  style={circleColor ? { backgroundColor: circleColor } : undefined}
                 />
                 <span
                   className={`text-sm ${
                     isDone || isActive ? "text-foreground" : "text-muted-foreground"
                   }`}
                 >
-                  {step === "uploaded" && "Video uploaded"}
-                  {step === "analyzing" && "Running AI video analysis"}
-                  {step === "processing" && "Formatting report with Gemini"}
-                  {step === "complete" && "Report ready"}
+                  {label}
                 </span>
-                {isActive && <StatusBadge status={status} />}
+                {isActive && <StatusBadge status={status === "finalizing" ? "uploaded" : status} />}
               </div>
             );
           })}

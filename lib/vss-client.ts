@@ -40,7 +40,6 @@ export async function uploadFile(
 
   if (!res.ok) {
     const text = await res.text();
-    console.log(text);
     throw new Error(`VSS upload failed (${res.status}): ${text}`);
   }
 

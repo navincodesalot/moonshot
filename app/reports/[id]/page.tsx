@@ -2,18 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ReportView } from "@/components/report-view";
+import { ReportView, ScoreCards } from "@/components/report-view";
 import { AnalysisProgress } from "@/components/analysis-progress";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import type { StructuredReport } from "@/lib/schemas/report-schema";
 
 interface ReportData {
   _id: string;
   status: string;
   vssFileId: string;
   videoFilename: string;
+  uploadthingUrl?: string;
   supervisorNotes?: string;
   rawVSSOutput?: string;
   structuredReport?: Record<string, unknown>;
@@ -28,6 +31,14 @@ export default function ReportPage() {
   const router = useRouter();
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [localVideoUrl, setLocalVideoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem(`video-preview-${params.id}`);
+      if (cached) setLocalVideoUrl(cached);
+    } catch { /* ignore */ }
+  }, [params.id]);
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -79,62 +90,75 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b px-6 py-3 flex items-center gap-3">
-        <Link href="/reports">
+      <header className="border-b px-4 sm:px-6 py-3 flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
+        <Link href="/reports" className="shrink-0">
           <Button variant="ghost" size="icon-sm">
             <ArrowLeft className="size-4" />
           </Button>
         </Link>
-        <div className="flex items-center gap-2 flex-1">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           <h1 className="text-sm font-semibold truncate">{report.videoFilename}</h1>
-          <StatusBadge status={report.status} />
+          <StatusBadge status={report.status} className="shrink-0" />
         </div>
-        <span className="text-xs text-muted-foreground">
-          {new Date(report.createdAt).toLocaleString()}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            {new Date(report.createdAt).toLocaleString()}
+          </span>
+          <ThemeToggle />
+        </div>
       </header>
 
-      {isProcessing ? (
-        <main className="flex-1 flex items-center justify-center p-6">
-          <AnalysisProgress status={report.status} videoFilename={report.videoFilename} />
-        </main>
-      ) : report.status === "error" ? (
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center flex flex-col items-center gap-3">
-            <StatusBadge status="error" />
-            <p className="text-sm text-destructive">
-              {report.errorMessage || "An error occurred during analysis."}
-            </p>
-            <Link href="/">
-              <Button variant="outline">Upload New Video</Button>
-            </Link>
-          </div>
-        </main>
-      ) : (
-        <main className="flex-1 flex flex-col lg:flex-row">
-          {/* Left panel: video + notes */}
-          <div className="lg:w-[35%] border-b lg:border-b-0 lg:border-r p-4">
-            <div className="rounded-lg bg-muted aspect-video flex items-center justify-center">
+      <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+        {/* Left panel: video + scores */}
+        <div className="lg:w-[35%] lg:min-w-[280px] border-b lg:border-b-0 lg:border-r p-4 flex flex-col gap-4 overflow-y-auto min-h-0">
+          {(localVideoUrl || report.uploadthingUrl) ? (
+            <video
+              src={localVideoUrl || report.uploadthingUrl || undefined}
+              controls
+              className="w-full rounded-lg aspect-video bg-black shrink-0"
+            />
+          ) : (
+            <div className="rounded-lg bg-muted aspect-video flex items-center justify-center shrink-0">
               <p className="text-xs text-muted-foreground">
-                Video preview for {report.videoFilename}
+                No video available for {report.videoFilename}
               </p>
             </div>
-          </div>
+          )}
 
-          {/* Right panel: report */}
-          <div className="lg:w-[65%] p-4 overflow-y-auto">
-            {report.structuredReport ? (
-              <ReportView
-                report={report.structuredReport as import("@/lib/schemas/report-schema").StructuredReport}
-                rawOutput={report.rawVSSOutput}
-                processingTimeMs={report.processingTimeMs}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">No structured report available.</p>
-            )}
-          </div>
-        </main>
-      )}
+          {report.status === "complete" && report.structuredReport && (
+            <ScoreCards report={report.structuredReport as StructuredReport} />
+          )}
+        </div>
+
+        {/* Right panel: status-dependent content */}
+        <div className="lg:w-[65%] lg:min-w-0 p-4 overflow-y-auto min-h-0 flex-1">
+          {isProcessing ? (
+            <div className="h-full flex items-center justify-center">
+              <AnalysisProgress status={report.status} videoFilename={report.videoFilename} />
+            </div>
+          ) : report.status === "error" ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center flex flex-col items-center gap-3">
+                <StatusBadge status="error" />
+                <p className="text-sm text-destructive">
+                  {report.errorMessage || "An error occurred during analysis."}
+                </p>
+                <Link href="/">
+                  <Button variant="outline">Upload New Video</Button>
+                </Link>
+              </div>
+            </div>
+          ) : report.structuredReport ? (
+            <ReportView
+              report={report.structuredReport as StructuredReport}
+              rawOutput={report.rawVSSOutput}
+              processingTimeMs={report.processingTimeMs}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">No structured report available.</p>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

@@ -11,8 +11,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   error: { label: "Error", variant: "destructive" },
 };
 
-export function StatusBadge({ status }: { status: string }) {
+export function StatusBadge({ status, className }: { status: string; className?: string }) {
   const config = STATUS_CONFIG[status] ?? { label: status, variant: "outline" as const };
 
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  return <Badge variant={config.variant} className={className}>{config.label}</Badge>;
 }

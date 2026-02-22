@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { VideoUploadForm } from "@/components/video-upload-form";
 import { AnalysisProgress } from "@/components/analysis-progress";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { FileText } from "lucide-react";
 import Link from "next/link";
 
 type PipelineState =
   | { phase: "idle" }
   | { phase: "uploading" }
+  | { phase: "finalizing"; filename: string }
   | { phase: "analyzing"; reportId: string; filename: string; status: string }
   | { phase: "complete"; reportId: string }
   | { phase: "error"; message: string };
@@ -18,15 +20,37 @@ type PipelineState =
 export default function Page() {
   const router = useRouter();
   const [state, setState] = useState<PipelineState>({ phase: "idle" });
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  const handleFileSelected = useCallback((_file: File, url: string) => {
+    setBlobUrl(url);
+  }, []);
+
+  const handleUploadProgress = useCallback((progress: number) => {
+    if (progress >= 100) {
+      setState((prev) =>
+        prev.phase === "uploading"
+          ? { phase: "finalizing", filename: "" }
+          : prev
+      );
+    }
+  }, []);
 
   const handleUploadComplete = useCallback(
-    async (data: { reportId: string; fileId: string }) => {
-      setState({
+    async (data: { reportId: string; fileId: string; blobUrl?: string }) => {
+      const urlToStore = data.blobUrl ?? blobUrl;
+      if (urlToStore) {
+        try {
+          sessionStorage.setItem(`video-preview-${data.reportId}`, urlToStore);
+        } catch { /* ignore */ }
+      }
+
+      setState((prev) => ({
         phase: "analyzing",
         reportId: data.reportId,
-        filename: "",
+        filename: prev.phase === "finalizing" ? prev.filename : "",
         status: "uploaded",
-      });
+      }));
 
       try {
         const res = await fetch("/api/analyze", {
@@ -49,7 +73,7 @@ export default function Page() {
         });
       }
     },
-    [],
+    [blobUrl],
   );
 
   // Poll for status while analyzing
@@ -91,20 +115,25 @@ export default function Page() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b px-6 py-3 flex items-center justify-between">
+      <header className="border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
         <h1 className="text-sm font-semibold tracking-tight">Moonshot</h1>
-        <Link href="/reports">
-          <Button variant="outline" size="sm">
-            <FileText className="size-3" />
-            View Reports
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/reports">
+            <Button variant="outline" size="sm">
+              <FileText className="size-3" />
+              View Reports
+            </Button>
+          </Link>
+          <ThemeToggle />
+        </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-6">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
         {(state.phase === "idle" || state.phase === "uploading") && (
           <VideoUploadForm
             onUploadComplete={handleUploadComplete}
+            onUploadProgress={handleUploadProgress}
+            onFileSelected={handleFileSelected}
             isUploading={state.phase === "uploading"}
             setIsUploading={(v) =>
               setState(v ? { phase: "uploading" } : { phase: "idle" })
@@ -112,9 +141,9 @@ export default function Page() {
           />
         )}
 
-        {state.phase === "analyzing" && (
+        {(state.phase === "finalizing" || state.phase === "analyzing") && (
           <AnalysisProgress
-            status={state.status}
+            status={state.phase === "finalizing" ? "finalizing" : state.status}
             videoFilename={state.filename || "Video"}
           />
         )}

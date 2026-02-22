@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { ReportCard } from "@/components/report-card";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -45,17 +46,20 @@ export default function ReportsPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b px-6 py-3 flex items-center justify-between">
+      <header className="border-b px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
         <h1 className="text-sm font-semibold tracking-tight">Reports</h1>
-        <Link href="/">
-          <Button size="sm">
-            <Plus className="size-3" />
-            New Upload
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/">
+            <Button size="sm">
+              <Plus className="size-3" />
+              New Upload
+            </Button>
+          </Link>
+          <ThemeToggle />
+        </div>
       </header>
 
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-4 sm:p-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <p className="text-sm text-muted-foreground">Loading reports...</p>

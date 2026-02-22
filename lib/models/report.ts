@@ -13,6 +13,8 @@ export interface Report {
   status: ReportStatus;
   vssFileId: string;
   videoFilename: string;
+  uploadthingUrl?: string;
+  uploadthingKey?: string;
   supervisorNotes?: string;
   rawVSSOutput?: string;
   structuredReport?: Record<string, unknown>;
@@ -26,6 +28,8 @@ export interface ReportInsert {
   status: ReportStatus;
   vssFileId: string;
   videoFilename: string;
+  uploadthingUrl?: string;
+  uploadthingKey?: string;
   supervisorNotes?: string;
   rawVSSOutput?: string;
   structuredReport?: Record<string, unknown>;
