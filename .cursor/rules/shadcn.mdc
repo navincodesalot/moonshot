@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+
+Use ShadCN for all base components. The styles are already setup. Just run
+pnpm dlx shadcn@latest add ___ (valid shadcn component)
+then follow the prompts. you may have to overwrite existing component to get latest shadcn which is fine.
+
+Ex for checkbox:
+pnpm dlx shadcn@latest add checkbox
