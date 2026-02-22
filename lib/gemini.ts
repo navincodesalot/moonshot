@@ -43,9 +43,9 @@ Return ONLY a JSON object with this exact structure:
     "Safe_Score": "0-100. Deduct 5-10 for 'Common Omissions' (gloves/masks); 15-20 for 'High-Risk Negligence' (no eye pro/fall risks). Keep above 60 unless life-threatening."
   },
   "Descriptions": {
-    "Prod_Desc": "Explain Subject's score. Highlight 'Tool-on-Work' time vs. movement inefficiencies.",
-    "Qual_Desc": "Explain Subject's score. Focus on 'measuring twice' vs 'cutting once'.",
-    "Safe_Desc": "Explain Subject's score. Use a supportive, peer-like tone."
+    "Prod_Desc": "Explain Subject's score in 3 bullet points. Highlight 'Tool-on-Work' time vs. movement inefficiencies.",
+    "Qual_Desc": "Explain Subject's score in 3 bullet points. Focus on 'measuring twice' vs 'cutting once'.",
+    "Safe_Desc": "Explain Subject's score in 3 bullet points. Use a supportive, peer-like tone."
   }
 }
 

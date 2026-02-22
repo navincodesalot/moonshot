@@ -115,22 +115,24 @@ export function ReportView({ report, rawOutput, processingTimeMs }: ReportViewPr
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-primary animate-pulse" />
-            <CardTitle className="text-base">{report.Metadata.Work_Description}</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">{report.Metadata.Work_Description}</CardTitle>
           </div>
-          <CardDescription className="flex items-center gap-1.5">
-            <Clock className="size-3" />
+          <CardDescription className="flex items-center gap-1.5 text-base">
+            <Clock className="size-4" />
             {formatSeconds(report.Metadata.Stream_Duration_Sec)} total duration
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="flex flex-col gap-1.5">
-            {report.Metadata.Gen_Summary.map((point, i) => (
-              <li key={i} className="text-sm flex items-start gap-2">
-                <span className="text-primary shrink-0 mt-0.5 font-bold">&bull;</span>
-                {point}
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-48 overflow-y-auto" aria-label="Summary">
+            <ul className="flex flex-col gap-2">
+              {report.Metadata.Gen_Summary.map((point, i) => (
+                <li key={i} className="text-base sm:text-lg flex items-start gap-2">
+                  <span className="text-primary shrink-0 mt-0.5 font-bold">&bull;</span>
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
         </CardContent>
       </Card>
 
@@ -332,11 +334,13 @@ function ScoreCard({
   score,
   description,
   icon,
+  iconColor,
 }: {
   label: string;
   score: number;
   description: string;
   icon: React.ReactNode;
+  iconColor: string;
 }) {
   const color = scoreColor(score);
 
@@ -345,8 +349,8 @@ function ScoreCard({
       <div className="h-1 w-full" style={{ background: color }} />
       <CardContent className="pt-4 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-sm font-medium shrink-0">
-            <span style={{ color }}>{icon}</span>
+          <div className="flex items-center gap-2 text-base sm:text-lg font-medium shrink-0">
+            <span style={{ color: iconColor }}>{icon}</span>
             {label}
           </div>
           <span className="text-4xl sm:text-5xl font-bold tabular-nums shrink-0" style={{ color }}>
@@ -358,9 +362,11 @@ function ScoreCard({
           className="h-2"
           indicatorColor={color}
         />
-        <p className="text-xs text-muted-foreground line-clamp-2">
-          {description}
-        </p>
+        <div className="max-h-24 overflow-y-auto" aria-label={`${label} description`}>
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+            {description}
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
@@ -377,19 +383,22 @@ export function ScoreCards({ report }: { report: StructuredReport }) {
         label="Productivity"
         score={prodScore}
         description={report.Descriptions.Prod_Desc}
-        icon={<Zap className="size-4" />}
+        icon={<Zap className="size-5" />}
+        iconColor="var(--chart-1)"
       />
       <ScoreCard
         label="Quality"
         score={qualScore}
         description={report.Descriptions.Qual_Desc}
-        icon={<Target className="size-4" />}
+        icon={<Target className="size-5" />}
+        iconColor="var(--chart-2)"
       />
       <ScoreCard
         label="Safety"
         score={safeScore}
         description={report.Descriptions.Safe_Desc}
-        icon={<ShieldCheck className="size-4" />}
+        icon={<ShieldCheck className="size-5" />}
+        iconColor="var(--chart-4)"
       />
     </div>
   );
