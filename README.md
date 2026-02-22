@@ -4,6 +4,8 @@
 
 Built for the **UMD Startup Shell × Ironsite Hackathon** · February 20–22, 2026
 
+**[→ Live Demo](https://ironsite-moonshot.vercel.app/)**
+
 ---
 
 ## Overview
