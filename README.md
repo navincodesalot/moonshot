@@ -181,11 +181,15 @@ The backend uses custom construction/worksite prompts for:
 
 ## Utilities (`utilities/`)
 
-Helper scripts for video preprocessing.
+Helper scripts for video preprocessing and example test data.
 
 ```
 utilities/
-└── process_videos.py               # Split long videos into fixed-length clips
+├── process_videos.py               # Split long videos into fixed-length clips
+└── ExampleVideos/                  # Sample videos used for testing
+    ├── Explanation.txt             # Describes each example video
+    └── Videos/
+        └── Video 1/clips/          # Pre-split clips (construction house build)
 ```
 
 ### `process_videos.py`
@@ -196,6 +200,10 @@ utilities/
 - **Tech:** OpenCV (`cv2`)
 
 Useful for batch processing long recordings before feeding them into the analysis pipeline.
+
+### `ExampleVideos/`
+
+Preprocessed sample videos for testing the analysis pipeline. `Explanation.txt` describes each video (e.g. Video 1: construction footage of someone building a house).
 
 ---
 
