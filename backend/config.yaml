@@ -1,0 +1,133 @@
+######################################################################################################
+# SPDX-FileCopyrightText: Copyright (c) 2024-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+######################################################################################################
+---
+# Environment configuration
+
+tools:
+  graph_db:
+    type: neo4j
+    params:
+      host: !ENV ${GRAPH_DB_HOST}
+      port: !ENV ${GRAPH_DB_BOLT_PORT}
+      username: !ENV ${GRAPH_DB_USERNAME}
+      password: !ENV ${GRAPH_DB_PASSWORD}
+    tools:
+      embedding: nvidia_embedding
+
+  vector_db:
+    type: milvus
+    params:
+      host: !ENV ${MILVUS_DB_HOST}
+      port: !ENV ${MILVUS_DB_GRPC_PORT}
+    tools:
+      embedding: nvidia_embedding
+
+  chat_llm:
+    type: llm
+    params:
+      model: meta/llama-3.1-8b-instruct
+      base_url: "http://host.docker.internal:8007/v1" #FIXME - update url to running LLM Instance
+      max_tokens: 2048
+      temperature: 0.2
+      top_p: 0.7
+
+  summarization_llm:
+    type: llm
+    params:
+      model: meta/llama-3.1-8b-instruct
+      base_url: "http://host.docker.internal:8007/v1" #FIXME - update url to running LLM Instance
+      max_tokens: 2048
+      temperature: 0.2
+      top_p: 0.7
+
+  notification_llm:
+    type: llm
+    params:
+      model: meta/llama-3.1-8b-instruct
+      base_url: "http://host.docker.internal:8007/v1" #FIXME - update url to running LLM Instance
+      max_tokens: 2048
+      temperature: 0.2
+      top_p: 0.7
+
+  nvidia_embedding:
+    type: embedding
+    params:
+      model: nvidia/llama-3.2-nv-embedqa-1b-v2
+      base_url: "http://host.docker.internal:8006/v1" #FIXME
+
+  nvidia_reranker:
+    type: reranker
+    params:
+      model: nvidia/llama-3.2-nv-rerankqa-1b-v2
+      base_url: "http://host.docker.internal:8005/v1" #FIXME - update url to running reranker NIM Instance
+
+  notification_tool:
+    type: alert_sse_notifier
+    params:
+      endpoint: "http://127.0.0.1:60000/via-alert-callback"
+
+functions:
+  summarization:
+    type: batch_summarization
+    params:
+      batch_size: 6
+      batch_max_concurrency: 20
+      prompts:
+        caption: "Write a concise and clear dense caption for the provided construction or industrial worksite video. Focus on observable events that could affect safety, productivity, or quality of work. These include unsafe behaviors, missing or improper protective equipment, hazardous conditions, delays, waiting, searching for tools or materials, rework, corrections, inefficient movement, equipment misuse or malfunction, material handling problems, coordination issues between workers, interruptions, and any deviations from normal workflow. Also if any Occupational Safety and Health Administration (OSHA) violations are not met by the workers / environment. Each sentence must describe one specific observable event and must begin and end with a timestamp. Be objective, visual, and descriptive without inferring intent or making assumptions."
+        caption_summarization: "You should summarize the following events from a POV construction site video in the format start_time:end_time:caption. For start_time and end_time use . to separate seconds, minutes, hours. If during a time segment only routine productive work happens without safety or efficiency concerns, briefly describe the work performed. If irregular, unsafe, inefficient, or non-productive activity occurs, describe it in detail. Focus on: - Type of work completed - Work progress - Safety violations (missing PPE, fall risks, unsafe equipment handling) - Rework or mistakes - Idle time or worker distraction - Equipment misuse or malfunction - Coordination or communication between workers. Output structured bullet points organized under three headings: Safety Issues, Productivity Issues, and Quality Issues. Each bullet point should include the time range and a brief explanation of what happened and why it matters operationally."
+        summary_aggregation: "You are an automated construction performance evaluation system. You will receive time-stamped event captions in the format start_time:end_time:caption describing observable worksite events. First, aggregate similar captions into single event descriptions. If the same event occurs multiple times, combine all time ranges as start_time1:end_time1,...,start_timek:end_time:event_description. If adjacent time ranges are separated by only a few tenths of a second, merge them into one continuous range. Then group all events into these fixed categories: Work Completed, Work in Progress, Unsafe Behavior, Operational Inefficiencies, Rework or Quality Issues, Equipment Misuse or Risk, Coordination & Communication, and Idle Time or Productivity Loss. List events as bullet points under each category." 
+    tools:
+      llm: summarization_llm
+      db: graph_db
+
+  ingestion_function:
+    type: graph_ingestion
+    params:
+      batch_size: 1
+      image: false
+      cot: false
+      top_k: 5
+      #disable_entity_extraction: True  # uncomment this line for DGX Spark
+    tools:
+      llm: chat_llm
+      db: graph_db
+
+  retriever_function:
+    type: graph_retrieval
+    params:
+      batch_size: 1
+      image: false
+      cot: false
+      top_k: 5
+    tools:
+      llm: chat_llm
+      db: graph_db
+
+  notification:
+    type: notification
+    params:
+      events: []
+    tools:
+      llm: notification_llm
+      notification_tool: notification_tool
+
+context_manager:
+  functions:
+    - summarization
+    - ingestion_function
+    - retriever_function
+    - notification
